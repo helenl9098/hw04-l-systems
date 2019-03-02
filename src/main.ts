@@ -77,11 +77,11 @@ function loadScene() {
   square.create();
   screenQuad = new ScreenQuad();
   screenQuad.create();
-  let obj0: string = readTextFile('./resources/obj/cylinder.obj');
+  let obj0: string = readTextFile('https://raw.githubusercontent.com/helenl9098/hw04-l-systems/blob/master/resources/obj/cylinder.obj');
   mesh = new Mesh(obj0, vec3.fromValues(0, 0, 0));
   mesh.create();
 
-  let obj1: string = readTextFile('./resources/obj/leaf.obj');
+  let obj1: string = readTextFile('https://raw.githubusercontent.com/helenl9098/hw04-l-systems/blob/master/resources/obj/leaf.obj');
   leafMesh = new Mesh(obj1, vec3.fromValues(0, 0, 0));
   leafMesh.create();
 

@@ -243,7 +243,6 @@ export default class LSystem {
 				this.turtleStack.push(newT);
 			}
 			else if (currentCharacter == '[') {
-				//this.currentTurtle.moveForward(0.2);
 				this.currentTurtle.depth += 0.1;
 				let newT: Turtle = new Turtle();
 				newT.copy(this.currentTurtle);
