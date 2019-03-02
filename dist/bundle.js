@@ -6114,10 +6114,10 @@ function loadScene() {
     square.create();
     screenQuad = new __WEBPACK_IMPORTED_MODULE_4__geometry_ScreenQuad__["a" /* default */]();
     screenQuad.create();
-    let obj0 = Object(__WEBPACK_IMPORTED_MODULE_8__globals__["b" /* readTextFile */])('https://raw.githubusercontent.com/helenl9098/hw04-l-systems/blob/master/resources/obj/cylinder.obj');
+    let obj0 = Object(__WEBPACK_IMPORTED_MODULE_8__globals__["b" /* readTextFile */])('./resources/obj/cylinder.obj');
     mesh = new __WEBPACK_IMPORTED_MODULE_5__geometry_Mesh__["a" /* default */](obj0, __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0, 0, 0));
     mesh.create();
-    let obj1 = Object(__WEBPACK_IMPORTED_MODULE_8__globals__["b" /* readTextFile */])('https://raw.githubusercontent.com/helenl9098/hw04-l-systems/blob/master/resources/obj/leaf.obj');
+    let obj1 = Object(__WEBPACK_IMPORTED_MODULE_8__globals__["b" /* readTextFile */])('./resources/obj/leaf.obj');
     leafMesh = new __WEBPACK_IMPORTED_MODULE_5__geometry_Mesh__["a" /* default */](obj1, __WEBPACK_IMPORTED_MODULE_0_gl_matrix__["d" /* vec3 */].fromValues(0, 0, 0));
     leafMesh.create();
     loadVariables(mesh, lsystem.turtleStack, [119, 91, 70]);
