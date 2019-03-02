@@ -1,52 +1,92 @@
-import {vec3} from 'gl-matrix';
+import {vec3, vec4, mat4, mat3, quat} from 'gl-matrix';
 import * as Stats from 'stats-js';
 import * as DAT from 'dat-gui';
 import Square from './geometry/Square';
 import ScreenQuad from './geometry/ScreenQuad';
+import Mesh from './geometry/Mesh';
 import OpenGLRenderer from './rendering/gl/OpenGLRenderer';
 import Camera from './Camera';
 import {setGL} from './globals';
 import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
+import Turtle from './lsystem/turtle.ts'
+import LSystem from './lsystem/LSystem.ts'
+import {readTextFile} from './globals';
 
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
 const controls = {
+  thickness: 30,
+  leavesAngle: 5,
+  seed: 14.4,
 };
 
 let square: Square;
 let screenQuad: ScreenQuad;
+let mesh: Mesh;
+let leafMesh: Mesh;
 let time: number = 0.0;
 
+function loadVariables(mesh: Mesh, stack: Turtle[], color: number[]) {
+  let offsetsArray = [];
+  let scaleArray = [];
+  let rotationArray = [];
+  let colorsArray = [];
+  let n: number = stack.length;
+  for(let i = 0; i < n; i++) {
+      
+      var currentTurtle = stack[i];
+
+      var tPosition = currentTurtle.position;
+      offsetsArray.push(tPosition[0]);
+      offsetsArray.push(tPosition[1]);
+      offsetsArray.push(tPosition[2]);
+
+      var tScale = currentTurtle.scale;
+      scaleArray.push(tScale[0]);
+      scaleArray.push(tScale[1]);
+      scaleArray.push(tScale[2]);
+
+
+      let tRotationAxis: vec3 = vec3.create();
+      let tRotationAngle: number = quat.getAxisAngle(tRotationAxis,
+                                            currentTurtle.quaternion);
+      rotationArray.push(tRotationAxis[0]);
+      rotationArray.push(tRotationAxis[1]);
+      rotationArray.push(tRotationAxis[2]);
+      rotationArray.push(tRotationAngle);
+
+      colorsArray.push(color[0] / 255.);
+      colorsArray.push(color[1] / 255.);
+      colorsArray.push(color[2] / 255.);
+      colorsArray.push(1.0); // Alpha channel
+    
+  }
+  let offsets: Float32Array = new Float32Array(offsetsArray);
+  let colors: Float32Array = new Float32Array(colorsArray);
+  let rotations: Float32Array = new Float32Array(rotationArray);
+  let scales: Float32Array = new Float32Array(scaleArray);
+  mesh.setInstanceVBOs(offsets, colors, rotations, scales);
+  mesh.setNumInstances(n); // grid of "particles"
+}
+
 function loadScene() {
+
+  let lsystem: LSystem = new LSystem("FX", 6, controls.thickness, controls.seed, controls.leavesAngle);
+
   square = new Square();
   square.create();
   screenQuad = new ScreenQuad();
   screenQuad.create();
+  let obj0: string = readTextFile('./resources/obj/cylinder.obj');
+  mesh = new Mesh(obj0, vec3.fromValues(0, 0, 0));
+  mesh.create();
 
-  // Set up instanced rendering data arrays here.
-  // This example creates a set of positional
-  // offsets and gradiated colors for a 100x100 grid
-  // of squares, even though the VBO data for just
-  // one square is actually passed to the GPU
-  let offsetsArray = [];
-  let colorsArray = [];
-  let n: number = 100.0;
-  for(let i = 0; i < n; i++) {
-    for(let j = 0; j < n; j++) {
-      offsetsArray.push(i);
-      offsetsArray.push(j);
-      offsetsArray.push(0);
+  let obj1: string = readTextFile('./resources/obj/leaf.obj');
+  leafMesh = new Mesh(obj1, vec3.fromValues(0, 0, 0));
+  leafMesh.create();
 
-      colorsArray.push(i / n);
-      colorsArray.push(j / n);
-      colorsArray.push(1.0);
-      colorsArray.push(1.0); // Alpha channel
-    }
-  }
-  let offsets: Float32Array = new Float32Array(offsetsArray);
-  let colors: Float32Array = new Float32Array(colorsArray);
-  square.setInstanceVBOs(offsets, colors);
-  square.setNumInstances(n * n); // grid of "particles"
+  loadVariables(mesh, lsystem.turtleStack, [119, 91, 70]);
+  loadVariables(leafMesh, lsystem.leafStack, [0, 255, 0]);
 }
 
 function main() {
@@ -60,7 +100,21 @@ function main() {
 
   // Add controls to the gui
   const gui = new DAT.GUI();
+  var guiT = gui.add(controls, 'thickness', 25, 50);
+  var guiC = gui.add(controls, 'leavesAngle', 0, 30);
+  var guiS = gui.add(controls, 'seed', 0, 25);
 
+  guiT.onChange(function(value: number) {
+    loadScene();
+  });
+
+  guiC.onChange(function(value: number) {
+    loadScene();
+  });
+
+  guiS.onChange(function(value: number) {
+    loadScene();
+  });
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
   const gl = <WebGL2RenderingContext> canvas.getContext('webgl2');
@@ -74,12 +128,13 @@ function main() {
   // Initial call to load scene
   loadScene();
 
-  const camera = new Camera(vec3.fromValues(50, 50, 10), vec3.fromValues(50, 50, 0));
-
+  const camera = new Camera(vec3.fromValues(0, 0, 0), vec3.fromValues(0, 0, 0));
+ 
   const renderer = new OpenGLRenderer(canvas);
   renderer.setClearColor(0.2, 0.2, 0.2, 1);
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.ONE, gl.ONE); // Additive blending
+  //gl.enable(gl.BLEND);
+  //gl.blendFunc(gl.ONE, gl.ONE); // Additive blending
+  gl.enable(gl.DEPTH_TEST);
 
   const instancedShader = new ShaderProgram([
     new Shader(gl.VERTEX_SHADER, require('./shaders/instanced-vert.glsl')),
@@ -101,7 +156,7 @@ function main() {
     renderer.clear();
     renderer.render(camera, flat, [screenQuad]);
     renderer.render(camera, instancedShader, [
-      square,
+      mesh, leafMesh
     ]);
     stats.end();
 
