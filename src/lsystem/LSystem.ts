@@ -220,7 +220,10 @@ export default class LSystem {
 				this.turtleStack.push(newT);
 			}
 			else if (currentCharacter == '-') {
-				this.currentTurtle.moveForward(1.0 + this.currentTurtle.scale[0]);
+				if (this.currentTurtle.scale[0] < 0.3) {
+					this.currentTurtle.moveForward(this.currentTurtle.scale[0]);
+				}
+				this.currentTurtle.moveForward(1.0);
 				this.currentTurtle.forward = vec3.fromValues(0, 1, 0);
 				var randomA = rng(this.seed) * 30 + 40;
 				var randomB = rng(this.seed) * 30 + 10;
